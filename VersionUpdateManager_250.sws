@@ -1,0 +1,8 @@
+[Properties]
+Version=25.0
+[WorkspacePaths]
+ConfigFile=.\Programs\Config.ws
+[Projects]
+Project0=Defaults.src
+[Conditionals]
+Is$WebApp=False

@@ -1,0 +1,32 @@
+﻿{ ClassType=Abstract }
+Class cUpdateVersionBase is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property String psErrorMessage ""
+        Property String psClassName ""
+
+        String sClassName
+        Handle hSuperClass
+        
+        Get ClassSuperClass Self to hSuperClass
+        Get Name of hSuperClass to sClassName
+
+
+    End_Procedure
+
+    Procedure update
+//        String sClassName
+//        Handle hSuperClass
+//        
+//        CallStackDump sClassName
+//        //Move 5385 to hSuperClass
+//        
+//        Get ClassSuperClass Self to hSuperClass
+//        Get Name of hSuperClass to sClassName
+   
+        //Get Object_Label of Self to sClassName
+//        Error 300 ("Procedure update not implemented in class " + sClassName)
+        Error 300 ("Procedure update not implemented in child class!")
+    End_Procedure
+End_Class

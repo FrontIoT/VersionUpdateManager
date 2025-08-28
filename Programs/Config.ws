@@ -1,0 +1,12 @@
+[Workspace]
+Home=..\
+AppSrcPath=.\AppSrc
+AppHTMLPath=.\
+BitmapPath=.\
+IdeSrcPath=.\IdeSrc
+DataPath=.\
+DDSrcPath=.\
+HelpPath=.\Help
+ProgramPath=.\Programs
+FileList=.\DummyFilelist.cfg
+Description=DbVersionUpdater

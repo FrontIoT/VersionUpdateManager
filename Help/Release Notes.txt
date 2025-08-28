@@ -1,0 +1,44 @@
+This is a small utility that can be used to add code that should run as part of a deployment. It keeps track of the last version that is actively running on the machine and then run all the scripts that are needed to bring all non code updates to the latest version as well.
+
+
+
+
+Sample of implementation
+========================
+Use VersionUpdateManager.pkg
+
+// Here are all the version history objects and this is where you add new versions
+Use VersionUpdater\VersionClasses.pkg
+
+Handle[] haVersionObjects
+Handle oVersionUpdateManager
+
+Move (RefClass(UpdateVersion_1)) to haVersionObjects[-1]
+Move (RefClass(UpdateVersion_2)) to haVersionObjects[-1]
+Move (RefClass(UpdateVersion_3)) to haVersionObjects[-1]
+// Add new versions here in increasing order...
+
+Get Create (RefClass(cVersionUpdateManager)) to oVersionUpdateManager
+Set phaVersionObjectArray of oVersionUpdateManager to haVersionObjects
+// Debugging 
+//Send run of oVersionUpdateManager 1 1 // For debugging you can set parameters ToVersion and FromVersion
+Send run of oVersionUpdateManager (SizeOfArray(haVersionObjects))
+
+
+
+
+// This is the extention class you will make to incorporate it to your workspace where you want to use it.
+// VersionUpdateManager library
+Use VersionUpdateManagerBase.pkg
+
+Open System
+
+Class cVersionUpdateManager is a cVersionUpdateManagerBase
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        // Workspace specific
+        Set phSystemTable to System.File_Number
+        Set psSystemTable to "System"
+    End_Procedure
+End_Class
