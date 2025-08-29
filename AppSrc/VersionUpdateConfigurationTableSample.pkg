@@ -1,0 +1,122 @@
+﻿Use VersionUpdateConfigurationBase.pkg
+
+Class cVersionUpdateConfigurationTableSample is a cVersionUpdateConfigurationBase
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property String psDatabaseDriver "MSSQLDRV" // Structure_Start hSystemTable "DATAFLEX"
+        Property String psSystemTable ""
+        Property Handle phSystemTable
+
+        Property String psVersionColumnName "db_version"
+
+    End_Procedure
+
+    Function getVersion Returns Integer
+        Handle hSystemTable
+        Integer iColumn iVersion
+        String sVersionColumnName
+        Forward Get getVersion to iVersion
+
+        Get phSystemTable to hSystemTable
+        Get psVersionColumnName to sVersionColumnName
+
+        Get FieldNameToNumber hSystemTable sVersionColumnName to iColumn
+        If (iColumn = -1) Send AddVersionColumnToSystemTable hSystemTable
+        Get_Field_Value hSystemTable iColumn to iVersion
+
+        Function_Return iVersion
+    End_Function
+
+    Function setVersion Integer iVersion Returns Boolean
+        Handle hSystemTable
+        Integer iColumn
+        String sVersionColumnName
+
+        Get phSystemTable to hSystemTable
+        Get psVersionColumnName to sVersionColumnName
+
+        Get FieldNameToNumber hSystemTable sVersionColumnName to iColumn
+        Set_Field_Value hSystemTable iColumn to iVersion
+        SaveRecord hSystemTable
+
+        Function_Return true
+    End_Function
+
+    Function ValidateSetup Returns Boolean
+        Handle hSystemTable
+        String sSystemTable
+
+        Get phSystemTable to hSystemTable
+        Get psSystemTable to sSystemTable
+        
+        If (not(hSystemTable)) Begin
+            Error 300 "System table handle for storing the current db version is not defined. (Set phSystemTable of hDbVersionUpdater to System.File_Number)"
+            Function_Return false
+        End
+        
+        If (sSystemTable = '') Begin
+            Error 300 "System table name for storing the current db version is missing. (Set psSystemTable of hDbVersionUpdater to 'System')"
+            Function_Return false
+        End
+        Function_Return True
+    End_Function
+
+    Procedure AddVersionColumnToSystemTable Handle hSystemTable
+        String sDatabaseDriver sPath sSystemTable sVersionColumnName
+        Integer iLatestVersion iColumn iUpdatingVersion
+        Boolean bDeveloperMode bOk bVerbose
+        Handle  hoWorkspace hTmpSystemTable
+        Get pbVerbose to bVerbose
+        Get psVersionColumnName to sVersionColumnName
+
+        Move hSystemTable to hTmpSystemTable
+        Structure_Start hSystemTable sDatabaseDriver
+        
+        Move 0 to iColumn // Zero adds the column at the end of columns
+        Create_Field hSystemTable at iColumn
+        Set_Attribute DF_FIELD_NAME of hSystemTable iColumn to sVersionColumnName
+        Set_Attribute DF_FIELD_TYPE of hSystemTable iColumn to DF_BCD
+        Set_Attribute DF_FIELD_LENGTH of hSystemTable iColumn to 6
+        
+        Structure_End hSystemTable
+        Move hTmpSystemTable to hSystemTable
+    
+        Open hSystemTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sSystemTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hSystemTable to sPath
+        
+        Open hSystemTable
+        Set_Field_Value hSystemTable iColumn to 1
+        SaveRecord hSystemTable
+        
+        if (bVerbose) Showln "Added db_version column to System table"
+    End_Procedure
+
+    // Move to FrostaGlobalDataFlex
+    Function FieldNameToNumber Integer iTable String sName Returns Integer
+        Integer iMax iField
+        String sFieldName
+        Move (Lowercase(sName)) to sName
+        Get_Attribute DF_FILE_NUMBER_FIELDS of iTable to iMax
+        For iField from 1 to iMax
+            Get_Attribute DF_FIELD_NAME of iTable iField to sFieldName
+            If (sName=Lowercase(sFieldName)) Begin
+                Function_Return iField
+            End
+        Loop
+        If (sName="recnum") Begin
+            Function_Return 0
+        End
+        Function_Return -1 // not found
+    End_Function
+End_Class

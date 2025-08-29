@@ -1,0 +1,175 @@
+﻿Use VersionUpdateConfigurationBase.pkg
+
+Class cVersionUpdateConfigurationFileSample is a cVersionUpdateConfigurationBase
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property String psConfigFilePath to "Programs\version_updater.cfg"
+
+    End_Procedure
+
+    Function getVersion Returns Integer
+        Integer iVersion
+        String sConfigFilePath
+        Get psConfigFilePath to sConfigFilePath
+
+        Get getSetting sConfigFilePath "version" to iVersion
+        Function_Return iVersion
+    End_Function
+
+    Function setVersion Integer iVersion Returns Boolean
+        String sConfigFilePath
+        Get psConfigFilePath to sConfigFilePath
+
+        Send setSetting sConfigFilePath "version" to iVersion
+    End_Function
+    
+    Function ValidateSetup Returns Boolean
+        String sConfigFilePath
+        Get psConfigFilePath to sConfigFilePath
+        
+        If (sConfigFilePath = '') Begin
+            Error 300 "Path to configuration file for storing the current db version is missing."
+            Function_Return false
+        End
+        Function_Return true
+    End_Function
+
+
+    // Below functions should probably go in a separate library, but are here for reference only
+    Function ReadFile Global String sFilePath Returns String
+        String sUploadDir sData sBuffer sFullFilePath sCr sBlankRow
+        Handle hoWorkSpace
+        Move "" to sCr
+        Move "" to sBlankRow
+        If (SeqEof) Begin      // If we have an available sequential file channel.
+            Function_Return "Error! Cannot open file. Channel 9 is busy."
+        End
+        Else Begin
+            Get phoWorkspace of ghoApplication to hoWorkspace
+            Get psHome of hoWorkspace to sUploadDir
+            Move (sUploadDir - sFilePath) to sFullFilePath
+            Direct_Input channel 8 ("dir: " + sFullFilePath)
+            If (not(SeqEof)) Begin   // File exists.
+                Direct_Input channel 3 sFullFilePath
+                If (not(SeqEof)) Begin   // File exists.
+                    
+                    Repeat
+                        Readln channel 3 sBuffer
+                        If (sBuffer = "") Begin
+                            Move ((Character(10))+sBlankRow) to sBlankRow
+                        End
+                        Else Begin
+                            Move (sData+sBlankRow+sCr+sBuffer) to sData
+                            Move (Character(10)) to sCr
+                            Move "" to sBlankRow
+                        End
+                    Until (SeqEof)
+                End
+            End
+            Else Move ("File not found: " + sFullFilePath) to sData
+            
+            Close_Input channel 8
+            Close_Input channel 3
+        End
+        Function_Return sData
+    End_Function
+
+    // sType: W (create/clear and write), A (create if not exist and append)
+    Procedure WriteFile Global String sFilePath String sText String sTypeIn Boolean bRelativePathIn
+        String sHomeDir sFullFilePath sType
+        Boolean bRelativePath
+        Handle hoWorkSpace
+        Integer iChannel
+        
+        Move (Seq_New_Channel()) to iChannel
+        If (iChannel=DF_SEQ_CHANNEL_NOT_AVAILABLE) Begin
+            //Send Info_Box "No Channel Available for Output" "Error"
+            Procedure_Return
+        End 
+        
+        Move 'A' to sType
+        If (num_arguments = 3) Move sTypeIn to sType
+        Move True to bRelativePath
+        If (num_arguments = 4) Move bRelativePathIn to bRelativePath
+        Move sFilePath to sFullFilePath
+        If (bRelativePath) Begin
+            Get phoWorkspace of ghoApplication to hoWorkspace
+            Get psHome of hoWorkspace to sHomeDir
+            Move (sHomeDir - sFilePath) to sFullFilePath
+        End
+        
+        If (sType = 'W') Direct_Output channel iChannel sFullFilePath
+        If (sType = 'A') Append_Output channel iChannel sFullFilePath
+        
+        Writeln channel iChannel sText
+        
+        Close_Output channel iChannel
+        Send Seq_Release_Channel iChannel 
+    End_Procedure
+
+    Function setSetting String sKey String sValue String sSettingsFile Returns Boolean
+        String sData sCommentChar sSettingStr sType
+        String[] sSettings sSetting
+        Integer iItm iItemCount
+        Boolean bRelativePath bSettingFound
+        Move False to bSettingFound
+
+        Get ReadFile sSettingsFile to sData
+        Move (StrSplitToArray (sData, (Character(10)))) to sSettings
+        Move 0 to iItm
+        Move (SizeOfArray(sSettings)) to iItemCount
+        While (iItm < iItemCount)
+            Move (Left(trim(sSettings[iItm]), 1)) to sCommentChar
+            If (sCommentChar = '') Move (Right(Left(trim(sSettings[iItm]), 2), 1)) to sCommentChar
+            If (sCommentChar = "#" or sCommentChar = '')
+            Else Begin
+                Move (StrSplitToArray (trim(sSettings[iItm]), ":")) to sSetting
+                If (sKey = sSetting[0]) Begin
+                    Move (RemoveFromArray(sSetting, 0)) to sSetting
+                    Move (StrJoinFromArray(sSetting, ":")) to sSettingStr
+                    Move (sSettingStr + ":" + sValue) to sSettings[iItm]
+                    Move True to bSettingFound
+                End
+            End
+            Increment iItm
+        Loop
+
+        If (not(bSettingFound)) Begin
+            Move (sKey + ":" + sValue) to sSettings[iItemCount]
+        End
+        
+        Move (StrJoinFromArray(sSettings, (Character(10)))) to sData
+        Move "W" to sType
+        Move True to bRelativePath
+        Send WriteFile sSettingsFile sData sType bRelativePath
+        Function_Return sValue
+    End_Function
+
+    Function getSetting Global String sKey String sSettingsFile Returns String
+        String sSettingsFile sData sCommentChar sSettingStr
+        String[] sSettings sSetting
+        Integer iItm iItemCount
+
+        //Move "Programs\settings.txt" to sSettingsFile
+        Get ReadFile sSettingsFile to sData
+        Move (StrSplitToArray (sData, (Character(10)))) to sSettings
+        Move 0 to iItm
+        Move (SizeOfArray(sSettings)) to iItemCount
+        While (iItm < iItemCount)
+            Move (Left(trim(sSettings[iItm]), 1)) to sCommentChar
+            If (sCommentChar = '') Move (Right(Left(trim(sSettings[iItm]), 2), 1)) to sCommentChar
+            If (sCommentChar = "#" or sCommentChar = '')
+            Else Begin
+                Move (StrSplitToArray (trim(sSettings[iItm]), ":")) to sSetting
+                If (sKey = sSetting[0]) Begin
+                    Move (RemoveFromArray(sSetting, 0)) to sSetting
+                    Function_Return (trim(StrJoinFromArray(sSetting, ":")))
+                End
+            End
+            Increment iItm
+        Loop
+        
+        Function_Return ""
+    End_Function
+End_Class

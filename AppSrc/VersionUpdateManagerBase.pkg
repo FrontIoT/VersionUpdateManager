@@ -5,14 +5,15 @@ Class cVersionUpdateManagerBase is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
 
-        Property String psDatabaseDriver "MSSQLDRV" // Structure_Start hSystemTable "DATAFLEX"
         Property String psVersionColumnName "db_version"
-        Property Boolean pbDeveloperMode False // Run without updating the version number in the System table
         Property Boolean pbVerbose True // Verbose output
         
-        Property String psSystemTable ""
-        Property Handle phSystemTable
+        // Use a System table or a config file to manage version history
+        // Property String psSystemTable ""
+        // Property Handle phSystemTable
+        // Property String psConfigFilePath to "Programs\version_updater.cfg"
 
+        Property Handle phVersionUpdateConfiguration
         Property Handle[] phaVersionObjectArray
     End_Procedure
 
@@ -21,11 +22,12 @@ Class cVersionUpdateManagerBase is a cObject
         Move -1 to iRerunFromVersion
         If (num_arguments > 1) Move iRerunFromVersionParam to iRerunFromVersion
 
-        String sDatabaseDriver sSystemTable sVersionColumnName
+        String sDatabaseDriver sSystemTable sVersionColumnName sConfigFilePath
         Integer iColumn iCurrentVersion iUpdatingVersion
-        Boolean bDeveloperMode bOk bVerbose
-        Handle hSystemTable
+        Boolean bDeveloperMode bOk bVerbose bUseSystemTableConfig
+        Handle  hVersionUpdaterConfiguration
         Get pbVerbose to bVerbose
+        Get phVersionUpdateConfiguration to hVersionUpdaterConfiguration
 
 
         if (iLatestVersion < 0) Begin
@@ -33,45 +35,42 @@ Class cVersionUpdateManagerBase is a cObject
             Procedure_Return
         End
         
-        Get phSystemTable to hSystemTable
-        If (not(hSystemTable)) Begin
-            Error 300 "System table handle for storing the current db version is not defined. (Set phSystemTable of hDbVersionUpdater to System.File_Number)"
+        if (not(hVersionUpdaterConfiguration)) Begin
+            Error 300 "Version updater configuration handle is not defined. (Set phVersionUpdateConfiguration of hDbVersionUpdater to hVersionUpdaterConfiguration)"
             Procedure_Return
         End
-        
-        Get psSystemTable to sSystemTable
-        If (sSystemTable = '') Begin
-            Error 300 "System table name for storing the current db version is missing. (Set psSystemTable of hDbVersionUpdater to 'System')"
-            Procedure_Return
-        End
-        
-        Get psDatabaseDriver to sDatabaseDriver
-        Get pbDeveloperMode to bDeveloperMode
-        Get psVersionColumnName to sVersionColumnName
-        Get FieldNameToNumber hSystemTable sVersionColumnName to iColumn
-        
-        If (iColumn = -1) Send AddVersionColumnToSystemTable hSystemTable
 
-        Get_Field_Value hSystemTable iColumn to iCurrentVersion
-        if (bVerbose) Showln ("DB at currently version " + String(iCurrentVersion) + ". Latest version " + String(iLatestVersion))
+        Get ValidateSetup of hVersionUpdaterConfiguration to bOk
+        If (not(bOk)) Begin
+            Error 300 "Version updater configuration handle is not valid."
+            Procedure_Return
+        End
+
+        // // ConfigFilePath overrides any System Table setup
+        // Move True to bUseSystemTableConfig
+        // If (sConfigFilePath <> '') Move False to bUseSystemTableConfig
+        
+        Get psVersionColumnName to sVersionColumnName
+
+        Get getVersion of hVersionUpdaterConfiguration to iCurrentVersion
+
+        If (bVerbose) Showln ("DB at currently version " + String(iCurrentVersion) + ". Latest version " + String(iLatestVersion))
         Move (iCurrentVersion) to iUpdatingVersion
         
         If (iRerunFromVersion > -1) Move (iRerunFromVersion-1) to iUpdatingVersion
         
         While (iUpdatingVersion < iLatestVersion)
             Increment iUpdatingVersion
-            if (bVerbose) Showln ("Updating " + String(iUpdatingVersion))
+            If (bVerbose) Showln ("Updating " + String(iUpdatingVersion))
             
             Get UpdateDbVersion (iUpdatingVersion-1) to bOk
             
             If (not(bOk)) Begin
                 Move iLatestVersion to iUpdatingVersion
-                if (bVerbose) Showln ("Updating " + String(iUpdatingVersion) + " failed. Process cancelled...")
+                If (bVerbose) Showln ("Updating " + String(iUpdatingVersion) + " failed. Process cancelled...")
             End
             Else Begin
-                Get FieldNameToNumber hSystemTable sVersionColumnName to iColumn
-                Set_Field_Value hSystemTable iColumn to iUpdatingVersion
-                If (not(bDeveloperMode)) SaveRecord hSystemTable
+                Get setVersion of hVersionUpdaterConfiguration iUpdatingVersion to bOk
             End
             
         Loop
@@ -91,61 +90,4 @@ Class cVersionUpdateManagerBase is a cObject
         Function_Return bOk
     End_Function
     
-    Procedure AddVersionColumnToSystemTable Handle hSystemTable
-        String sDatabaseDriver sPath sSystemTable sVersionColumnName
-        Integer iLatestVersion iColumn iCurrentVersion iUpdatingVersion
-        Boolean bDeveloperMode bOk bVerbose
-        Handle  hoWorkspace hTmpSystemTable
-        Get pbVerbose to bVerbose
-        Get psVersionColumnName to sVersionColumnName
-
-        Move hSystemTable to hTmpSystemTable
-        Structure_Start hSystemTable sDatabaseDriver
-        
-        Move 0 to iColumn // Zero adds the column at the end of columns
-        Create_Field hSystemTable at iColumn
-        Set_Attribute DF_FIELD_NAME of hSystemTable iColumn to sVersionColumnName
-        Set_Attribute DF_FIELD_TYPE of hSystemTable iColumn to DF_BCD
-        Set_Attribute DF_FIELD_LENGTH of hSystemTable iColumn to 6
-        
-        Structure_End hSystemTable
-        Move hTmpSystemTable to hSystemTable
-    
-        Open hSystemTable
-        Move '' to sPath
-        
-        Get phoWorkspace of ghoApplication to hoWorkspace
-        Get psDDSRCPath of hoWorkspace to sPath
-        Get PathAtIndex of hoWorkspace sPath 1 to sPath
-        Set_Directory sPath
-        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
-            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
-        Move (sPath - sSystemTable - ".fd") to sPath
-        
-        Output_Aux_File DF_AUX_FILE_FD for hSystemTable to sPath
-        
-        Open hSystemTable
-        Set_Field_Value hSystemTable iColumn to 1
-        SaveRecord hSystemTable
-        
-        if (bVerbose) Showln "Added db_version column to System table"
-    End_Procedure
-
-    // Move to FrostaGlobalDataFlex
-    Function FieldNameToNumber Integer iTable String sName Returns Integer
-        Integer iMax iField
-        String sFieldName
-        Move (Lowercase(sName)) to sName
-        Get_Attribute DF_FILE_NUMBER_FIELDS of iTable to iMax
-        For iField from 1 to iMax
-            Get_Attribute DF_FIELD_NAME of iTable iField to sFieldName
-            If (sName=Lowercase(sFieldName)) Begin
-                Function_Return iField
-            End
-        Loop
-        If (sName="recnum") Begin
-            Function_Return 0
-        End
-        Function_Return -1 // not found
-    End_Function
 End_Class
