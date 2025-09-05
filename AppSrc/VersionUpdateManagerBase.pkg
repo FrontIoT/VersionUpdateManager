@@ -1,17 +1,7 @@
-﻿// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
-
-{ ClassType=Abstract }
+﻿{ ClassType=Abstract }
 Class cVersionUpdateManagerBase is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
-
-        Property String psVersionColumnName "db_version"
-        
-        // Use a System table or a config file to manage version history
-        // Property String psSystemTable ""
-        // Property Handle phSystemTable
-        // Property String psConfigFilePath to "Programs\version_updater.cfg"
-
         Property Boolean pbVerbose False // Verbose output
         Property Handle phVersionUpdateConfiguration
         Property Handle[] phaVersionObjectArray
@@ -31,25 +21,18 @@ Class cVersionUpdateManagerBase is a cObject
         Move -1 to iRerunFromVersion
         If (num_arguments > 1) Move iRerunFromVersionParam to iRerunFromVersion
 
-        String sDatabaseDriver sSystemTable sVersionColumnName sConfigFilePath
+        String sDatabaseDriver sSystemTable sConfigFilePath
         Integer iColumn iCurrentVersion iUpdatingVersion
         Boolean bDeveloperMode bOk bVerbose bUseSystemTableConfig
         Handle  hVersionUpdaterConfiguration
         Get pbVerbose to bVerbose
         Get phVersionUpdateConfiguration to hVersionUpdaterConfiguration
 
-
         if (iLatestVersion < 0) Begin
             Error 300 "Latest version parameter is not set. (Send run of object to piLatestVersion)"
             Procedure_Return
         End
         
-        // // ConfigFilePath overrides any System Table setup
-        // Move True to bUseSystemTableConfig
-        // If (sConfigFilePath <> '') Move False to bUseSystemTableConfig
-        
-        Get psVersionColumnName to sVersionColumnName
-
         Get getVersion of hVersionUpdaterConfiguration to iCurrentVersion
 
         If (bVerbose) Showln ("DB at currently version " + String(iCurrentVersion) + ". Latest version " + String(iLatestVersion))
