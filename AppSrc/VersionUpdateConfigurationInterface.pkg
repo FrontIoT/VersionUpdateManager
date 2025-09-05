@@ -1,0 +1,13 @@
+﻿Class cVersionUpdateConfigurationInterface is a Mixin
+    Function getVersion Returns Integer
+        Error 300 ("Function getVersion not implemented!")
+    End_Function
+
+    Function setVersion Integer iVersion Returns Boolean
+        Error 300 ("Function setVersion not implemented!")
+    End_Function
+
+    Procedure validateSetup Returns Boolean
+        Error 300 ("Function validateSetup not implemented!")
+    End_Procedure
+End_Class

@@ -16,6 +16,15 @@ Class cVersionUpdateManagerBase is a cObject
         Property Handle phVersionUpdateConfiguration
         Property Handle[] phaVersionObjectArray
     End_Procedure
+    
+    Procedure End_Construct_Object
+        Handle  hVersionUpdaterConfiguration
+        Get phVersionUpdateConfiguration to hVersionUpdaterConfiguration
+        if (not(hVersionUpdaterConfiguration)) Begin
+            Error 301 "Version updater configuration handle is not defined. (Set phVersionUpdateConfiguration of hDbVersionUpdater to hVersionUpdaterConfiguration)"
+            Abort
+        End
+    End_Procedure
 
     Procedure run Integer iLatestVersion Integer iRerunFromVersionParam
         Integer iRerunFromVersion
@@ -35,17 +44,6 @@ Class cVersionUpdateManagerBase is a cObject
             Procedure_Return
         End
         
-        if (not(hVersionUpdaterConfiguration)) Begin
-            Error 300 "Version updater configuration handle is not defined. (Set phVersionUpdateConfiguration of hDbVersionUpdater to hVersionUpdaterConfiguration)"
-            Procedure_Return
-        End
-
-        Get ValidateSetup of hVersionUpdaterConfiguration to bOk
-        If (not(bOk)) Begin
-            Error 300 "Version updater configuration handle is not valid."
-            Procedure_Return
-        End
-
         // // ConfigFilePath overrides any System Table setup
         // Move True to bUseSystemTableConfig
         // If (sConfigFilePath <> '') Move False to bUseSystemTableConfig

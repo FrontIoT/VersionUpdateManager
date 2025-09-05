@@ -1,12 +1,14 @@
-﻿Use VersionUpdateConfigurationBase.pkg
+﻿Use VersionUpdateConfigurationInterface.pkg
 
-Class cVersionUpdateConfigurationFileSample is a cVersionUpdateConfigurationBase
+Class cVersionUpdateConfigurationFileSample is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
 
         Property String psConfigFilePath to "Programs\version_updater.cfg"
-
+        Send validateSetup
     End_Procedure
+
+    Import_Class_Protocol cVersionUpdateConfigurationInterface
 
     Function getVersion Returns Integer
         Integer iVersion
@@ -24,16 +26,14 @@ Class cVersionUpdateConfigurationFileSample is a cVersionUpdateConfigurationBase
         Send setSetting sConfigFilePath "version" to iVersion
     End_Function
     
-    Function ValidateSetup Returns Boolean
+    Procedure validateSetup Returns Boolean
         String sConfigFilePath
         Get psConfigFilePath to sConfigFilePath
         
         If (sConfigFilePath = '') Begin
             Error 300 "Path to configuration file for storing the current db version is missing."
-            Function_Return false
         End
-        Function_Return true
-    End_Function
+    End_Procedure
 
 
     // Below functions should probably go in a separate library, but are here for reference only
