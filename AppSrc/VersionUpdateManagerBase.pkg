@@ -72,7 +72,7 @@ Class cVersionUpdateManagerBase is a cObject
             End
             
         Loop
-        Sleep 10
+        //Sleep 10
     End_Procedure
     
     Function UpdateDbVersion Integer iVersion Returns Boolean
