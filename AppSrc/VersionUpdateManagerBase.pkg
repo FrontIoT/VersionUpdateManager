@@ -26,7 +26,7 @@ Class cVersionUpdateManagerBase is a cObject
         End
     End_Procedure
 
-    Procedure run Integer iLatestVersion Integer iRerunFromVersionParam
+    Procedure versionUpdateManagerProcess Integer iLatestVersion Integer iRerunFromVersionParam
         Integer iRerunFromVersion
         Move -1 to iRerunFromVersion
         If (num_arguments > 1) Move iRerunFromVersionParam to iRerunFromVersion
