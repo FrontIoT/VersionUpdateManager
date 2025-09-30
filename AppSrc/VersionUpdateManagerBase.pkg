@@ -1,4 +1,4 @@
-﻿// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
+// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
 
 { ClassType=Abstract }
 Class cVersionUpdateManagerBase is a cObject
@@ -74,7 +74,6 @@ Class cVersionUpdateManagerBase is a cObject
             End
             
         Loop
-        Sleep 10
     End_Procedure
     
     Function UpdateDbVersion Integer iVersion Returns Boolean
