@@ -1,8 +1,9 @@
-
+﻿
 Struct ColumnDefinition
     String sTitle
     Integer iType
     Integer iSize
+    Integer iPrecision
     String sDefault
     Boolean bIdentity // Set auto increment on id column
 End_Struct
@@ -30,7 +31,7 @@ Class cColumnUpdater is a cObject
     // Send "table" "date_column" DF_DATE 10 "0000-00-00"
     //
     // TODO: Check that the column name is not already added. Then ignore this...
-    Procedure addColumn String sTable String sColumn Handle hType Integer iLength String sDefault
+    Procedure addColumn String sTable String sColumn Handle hType Integer iLength Integer iPrecision String sDefault
         String sPath
         Integer iColumn
         Handle hTable hoWorkspace
@@ -45,6 +46,7 @@ Class cColumnUpdater is a cObject
         Set_Attribute DF_FIELD_NAME          of hTable iColumn to sColumn
         Set_Attribute DF_FIELD_TYPE          of hTable iColumn to hType // (DF_BCD: Numeric, DF_ASCII: ascii, DF_DATE: date...)
         Set_Attribute DF_FIELD_LENGTH        of hTable iColumn to iLength
+        Set_Attribute DF_FIELD_PRECISION     of hTable iColumn to iPrecision
         Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to sDefault
         
         Structure_End hTable
