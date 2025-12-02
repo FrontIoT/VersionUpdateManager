@@ -1,0 +1,560 @@
+﻿Use ColumnUpdater.pkg
+Use IndexUpdater.pkg
+Use FroUtils\FROUTL_String.pkg
+
+Struct tTableDefinition
+    String sTableName
+    String sDescription
+    ColumnDefinition[] cdColumns
+    //Integer[] iIdxColumns
+    IndexSegment[] cdIndices
+    //RelationDefinition[] cdRelations
+End_Struct
+
+Class cTableUpdater is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        
+        Property Handle phDatabase
+        Property String psAction "create" // "update", "create", "drop", "rename", "truncate"
+
+        Property String psTableName
+        Property String psDescription
+
+        Property Handle[] phaColumns
+        Property Handle[] phaIndices
+
+
+        Property tTableDefinition paTableDefinition
+
+    End_Procedure
+
+
+    Procedure process
+        String sTableName sDescription sAction
+        Handle[] haColumns
+        Handle[] haIndices
+        Get psTableName to sTableName
+        Get psDescription to sDescription
+        Get psAction to sAction
+
+        Get phaColumns to haColumns
+        Get phaIndices to haIndices
+
+        If (sAction = "create") Begin
+            Send create sTableName sDescription haColumns haIndices
+        End
+        
+    End_Procedure
+    
+    Procedure create String sTableName String sDescription Handle[] haColumns Handle[] haIndices
+        Error 300 ("create not implemented ")
+    End_Procedure
+    
+
+
+
+
+
+
+    // Usage samples: 
+    // Send "table" "numeric_column" DF_BCD 2 0
+    // Send "table" "ascii_column" DF_ASCII 100 ""
+    // Send "table" "date_column" DF_DATE 10 "0000-00-00"
+    //
+    // TODO: Check that the column name is not already added. Then ignore this...
+    // TODO: WARNING! Adding iPosition might break indexes. I have not tested this yet.
+    Procedure addColumn String sTable String sColumn Handle hType Integer iLength Integer iPrecision String sDefault Integer iPosition
+        String sPath
+        Integer iColumn
+        Handle hTable hoWorkspace
+        Open (Trim(sTable)) as hTable
+        
+    //    Move hTable.sColumn to iColumn
+        
+    //    Structure_Start hTable "DATAFLEX"
+        Structure_Start hTable "MSSQLDRV"
+        
+        Move 0 to iColumn // Zero adds the column at the end of columns
+        If (num_arguments = 6) Move iPosition to iPosition
+        Create_Field hTable at iColumn
+        Set_Attribute DF_FIELD_NAME          of hTable iColumn to sColumn
+        Set_Attribute DF_FIELD_TYPE          of hTable iColumn to hType // (DF_BCD: Numeric, DF_ASCII: ascii, DF_DATE: date...)
+        Set_Attribute DF_FIELD_LENGTH        of hTable iColumn to iLength
+        If (hType <> DF_BCD) Begin
+            Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to sDefault
+        End
+        
+        Structure_End hTable
+        
+        Move "" to hTable
+        Open (Trim(sTable)) as hTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+    End_Procedure
+    
+    
+    // TODO: See if it is possible to send in name instead and then find index to delete
+    // TODO: Check so that this does not wreck indexes
+    Procedure removeColumn String sTable Integer iColumnNo //String sColumn Handle hType Integer iLength String sDefault
+        String sPath
+        Integer iColumn
+        Handle hTable hoWorkspace
+        Open (Trim(sTable)) as hTable
+        
+    //    Move hTable.sColumn to iColumn
+        
+    //    Structure_Start hTable "DATAFLEX"
+        Structure_Start hTable "MSSQLDRV"
+    
+        Delete_Field hTable iColumnNo
+    
+        Structure_End hTable
+        
+        Move "" to hTable
+        Open (Trim(sTable)) as hTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+    End_Procedure
+
+
+    Procedure renameTable Handle hTable String sNewTableName
+        Set_Attribute DF_FILE_PHYSICAL_NAME of hTable to (sNewTableName + ".int")
+    End_Procedure
+
+
+    Procedure createTable String sTableName String sDescription ColumnDefinition[] cdColumns Integer[] iIdxColumns
+        Handle hTable hDatabase
+        Handle hoWorkspace
+        String sPath sDatabase
+        String sOrigFolder
+        Integer iColumn iCol iIndex
+        tConnection tCV
+        tConnection[] atCV
+        
+//        Get phDatabase to hDatabase
+    
+        //Move 'stop_spild_lokalt' to sDatabase
+//        Get psDatabase of hDatabase to sDatabase
+//        Get ConnectionIdInfo of (oConnection(oApplication(Self))) sDatabase to tCV
+
+        Get ConnectionIDs of (oConnection(oApplication(Self))) to atCV
+        Move atCV[0] to tCV
+        
+        //*** Make sure int file  comes in first folder of datapath by
+        //*** making that folder current
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDataPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Get_Current_Directory to sOrigFolder
+        Set_Directory sPath
+    
+        //*** Create a SQL Server table
+        Move 0 to hTable
+        Structure_Start hTable "MSSQLDRV" //"MSSQLDRV" We use DATAFLEX when adding columns so why not here as well...
+            Set_Attribute DF_FILE_PHYSICAL_NAME of hTable to (sTableName + ".int")
+            Set_Attribute DF_FILE_RECNUM_TABLE of hTable to False
+            //Set_Attribute DF_FILE_LOGIN of hTable to ("SERVER=RUBEUSHAGRID\SQLEXPRESS;Trusted_Connection=yes;DATABASE=" - sDatabase)
+            Set_Attribute DF_FILE_LOGIN of hTable to tCV.sConnectionString
+            Set_Attribute DF_FILE_TABLE_NAME of hTable to sTableName
+            Set_Attribute DF_FILE_GENERATE_RECORD_ID_METHOD of hTable to RIM_IDENTITY_COLUMN // Ignoring RECNUM column
+            Set_Attribute DF_FILE_PRIMARY_INDEX of hTable to 0 // Ignoring RECNUM column
+    
+            Move 0 to iCol
+            While (iCol < (SizeOfArray(cdColumns)))
+                Move (iCol+1) to iColumn
+                // TODO: Rewrite so that this uses the addColumn?!?
+                Create_Field hTable At iColumn
+                Set_Attribute DF_FIELD_NAME          of hTable iColumn to cdColumns[iCol].sTitle
+                Set_Attribute DF_FIELD_TYPE          of hTable iColumn to cdColumns[iCol].iType
+                Set_Attribute DF_FIELD_LENGTH        of hTable iColumn to cdColumns[iCol].iSize
+                Set_Attribute DF_FIELD_PRECISION     of hTable iColumn to cdColumns[iCol].iPrecision
+                Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to cdColumns[iCol].sDefault
+                
+                // Set auto_increment column
+                If (cdColumns[iCol].bIdentity) Set_Attribute DF_FIELD_IS_IDENTITY of hTable iColumn to True
+                
+                Increment iCol
+            Loop
+            
+            // Indexes (-should-) cannot be a separate function 
+
+            Move 0 to iIndex
+            While (iIndex < (SizeOfArray(iIdxColumns)))
+                Send _addIndex hTable sTableName iIdxColumns[iIndex]
+                Increment iIndex
+            Loop
+            
+    //        Create_Index hTable At iIndex
+    //        Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to 1
+    //        Set_Attribute DF_INDEX_SEGMENT_FIELD of hTable iIndex 1 to 1
+    //        Set_Attribute DF_INDEX_NAME of hTable iIndex to (sTableName + (PadChar(Self, String(iIndex), 3, '0')))
+                
+    //        Send _addIndex hTable sTableName iIdxColumns
+            
+        Structure_End hTable
+    
+        //*** Reset current working folder to original value
+        Set_Directory sOrigFolder
+    
+        //*** Add to filelist and generate fd
+        Move 0 to hTable
+        Get_Attribute DF_FILE_NEXT_EMPTY of hTable to hTable
+        If (hTable > 0) Begin
+            //Set_Attribute DF_FILE_ROOT_NAME of hTable to ("DATAFLEX:" + sTableName)
+            Set_Attribute DF_FILE_ROOT_NAME of hTable to ("MSSQLDRV:" + sTableName)
+            Set_Attribute DF_FILE_DISPLAY_NAME of hTable to sDescription
+            Set_Attribute DF_FILE_LOGICAL_NAME of hTable to sTableName
+    
+            Open hTable
+
+            Get psDDSRCPath of hoWorkspace to sPath
+            Get PathAtIndex of hoWorkspace sPath 1 to sPath
+            Set_Directory sPath
+            If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+                Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+            Move (sPath - sTableName - ".fd") to sPath
+            Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+            Close hTable
+        End
+    End_Procedure // CreateTable
+
+    Procedure DeleteTable String sTableName
+    // TODO: Verify and test AI code
+        // Handle hTable
+        // Move 0 to hTable
+        // Get_Attribute DF_FILE_NEXT_EMPTY of hTable to hTable
+        // If (hTable > 0) Begin
+        //     Set_Attribute DF_FILE_ROOT_NAME of hTable to ("MSSQLDRV:" + sTableName)
+        //     Delete hTable
+        // End
+    End_Procedure
+
+    Function PadChar String sSrc Integer iLength String sChar Returns String
+        Integer iCurrentLength
+        
+        Move (Length(sSrc)) to iCurrentLength
+        If ((Length(sChar)) ne 1) Function_Return sSrc //"Error: sChar requires only one character"
+        
+        While (iCurrentLength < iLength)
+            Move (Insert(sChar, sSrc, 0)) to sSrc
+            Move (Length(sSrc)) to iCurrentLength
+        Loop
+        
+        Move (Right(sSrc, iLength)) to sSrc
+        
+        Function_Return sSrc
+    End_Function  // mPadChar
+    
+    Procedure removeIndex Handle hTable Integer iIndexNo String sDbDriver
+        // Open database table
+        Open hTable
+     
+         If (num_arguments < 3) Move "MSSQLDRV" to sDbDriver
+
+        // Start of the structure operation. 
+        // The embedded database driver name is "DATAFLEX".
+        Structure_Start hTable sDbDriver
+           // Specify the index to delete
+            Delete_Index hTable iIndexNo
+        Structure_End hTable DF_STRUCTEND_OPT_NONE
+    End_Procedure
+
+    // TODO: Move this to DbVersionIndexUpdater?
+    Procedure _addIndex Handle hTable String sTable Integer[] iColumns String sDbDriverParam
+        String sPath sDbDriver sName
+        Integer iLastIndex iIndex iSeg iColumn
+        IndexSegment[] stIndexSegment
+        
+        Move "MSSQLDRV" to sDbDriver
+        If (num_arguments > 3) Move sDbDriverParam to sDbDriver
+        
+        //Get_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable 1 to iIndex
+        Get_Attribute DF_FILE_LAST_INDEX_NUMBER of hTable to iLastIndex
+        Move (iLastIndex + 1) to iIndex
+        
+        Create_Index hTable At iIndex
+        Move (sTable + (PadChar(Self, String(iIndex), 3, '0'))) to sName
+        If (sDbDriver <> "DATAFLEX") Set_Attribute DF_INDEX_NAME of hTable iIndex to sName
+        
+        Move 0 to iSeg
+        For iColumn from 0 to (SizeOfArray(iColumns)-1)
+            Move hTable to stIndexSegment[iSeg].hTable
+            Move DF_CASE_IGNORED to stIndexSegment[iSeg].iCase // DF_CASE_USED, DF_CASE_IGNORED
+            Move iColumns[iColumn] to stIndexSegment[iSeg].iColumn
+            Move DF_ASCENDING to stIndexSegment[iSeg].iDirection // DF_ASCENDING, DF_DESCENDING
+            Move iIndex to stIndexSegment[iSeg].iIndex
+            Move -1 to stIndexSegment[iSeg].iSegment
+            Move iSeg to stIndexSegment[iSeg].iNumSegments
+            
+            Send InsertSegment stIndexSegment[iSeg]
+    
+            Increment iSeg
+        Loop
+        
+    End_Procedure
+
+    Procedure addIndex String sTable Integer[] iColumns String sDbDriverParam
+        String sPath sDbDriver
+        Integer iLastIndex iIndex iSeg iColumn
+        Handle hTable hoWorkspace hTableTmp
+        Open (Trim(sTable)) as hTable
+        IndexSegment[] stIndexSegment
+        
+        Move hTable to hTableTmp
+        
+        //Structure_Start hTable "DATAFLEX"
+        Move "MSSQLDRV" to sDbDriver
+        If (num_arguments > 2) Move sDbDriverParam to sDbDriver
+        Structure_Start hTable sDbDriver
+        
+            Send _addIndex hTable sTable iColumns sDbDriver
+        
+    //        //Get_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable 1 to iIndex
+    //        Get_Attribute DF_FILE_LAST_INDEX_NUMBER of hTable to iLastIndex
+    //        Move (iLastIndex + 1) to iIndex
+    //        
+    //        Create_Index hTable At iIndex
+    //        String sName
+    //        Move (sTable + (PadChar(Self, String(iIndex), 3, '0'))) to sName
+    //        Set_Attribute DF_INDEX_NAME of hTable iIndex to sName
+    //        
+    //        Move 0 to iSeg
+    //        For iColumn from 0 to (SizeOfArray(iColumns)-1)
+    //            Move hTable to stIndexSegment[iSeg].hTable
+    //            Move DF_CASE_IGNORED to stIndexSegment[iSeg].iCase // DF_CASE_USED, DF_CASE_IGNORED
+    //            Move iColumns[iColumn] to stIndexSegment[iSeg].iColumn
+    //            Move DF_ASCENDING to stIndexSegment[iSeg].iDirection // DF_ASCENDING, DF_DESCENDING
+    //            Move iIndex to stIndexSegment[iSeg].iIndex
+    //            Move -1 to stIndexSegment[iSeg].iSegment
+    //            Move iSeg to stIndexSegment[iSeg].iNumSegments
+    //            
+    //            Send InsertSegment stIndexSegment[iSeg]
+    //
+    //            Increment iSeg
+    //        Loop
+            
+        
+        Structure_End hTable
+        
+        Move "" to hTable
+        Open (Trim(sTable)) as hTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+    End_Procedure
+    
+    
+    Procedure InsertSegment IndexSegment sSegment
+        Handle hTable
+        Integer iIndex iSegment iNumSegments iCurSegment iSegmentCase iSegmentDirection iSegmentColumn iType
+     
+        //*** Move structure members to locals for shorter code
+        Move sSegment.hTable to hTable
+        Move sSegment.iIndex to iIndex
+        Move sSegment.iSegment to iSegment
+     
+    //    Get_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to iNumSegments
+        Move sSegment.iNumSegments to iNumSegments
+    //    If (iSegment = -1) Move (1+iNumSegments) to iSegment
+    //    If (iSegment > iNumSegments) Begin
+    //        Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to (iNumSegments + 1)
+    //        Move (iNumSegments + 1) to iCurSegment
+    //    End
+    //    Else If (iSegment > 0 and iSegment <= iNumSegments) Begin
+    //        Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to (iNumSegments + 1)
+            Move (iNumSegments + 1) to iCurSegment
+            // This is moved to iCurSegment to place it last. If we need to insert it, below code will need to be tested so that it moves all other segments properly
+    //        While (iCurSegment > sSegment.iSegment)
+    //            //*** Move index segment attributes
+    //            Get_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex (iCurSegment - 1) to iSegmentCase
+    //            Get_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex (iCurSegment - 1) to iSegmentDirection
+    //            Get_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex (iCurSegment - 1) to iSegmentColumn
+    //            
+    //            Set_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex iCurSegment to iSegmentCase
+    //            Set_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex iCurSegment to iSegmentDirection
+    //            Set_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex iCurSegment to iSegmentColumn
+    //            Decrement iCurSegment
+    //        End
+     
+            //*** Now set new segment attributes
+            Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to iCurSegment
+            
+            Get_Attribute DF_FIELD_TYPE              of hTable sSegment.iColumn to iType
+            Set_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex iCurSegment to sSegment.iColumn
+            If (iType = DF_ASCII) Begin // Was not possible on DF_TEXT... or iType = DF_TEXT) Begin
+                Set_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex iCurSegment to sSegment.iCase
+            End
+            Set_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex iCurSegment to sSegment.iDirection
+    //    End
+    End_Procedure
+    
+    
+    Procedure DeleteSegment Handle hTable Integer iIndex Integer iSegment
+        Integer iNumSegments iCurSegment iSegmentCase iSegmentDirection iSegmentColumn
+     
+        Get_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to iNumSegments
+        If (iSegment = iNumSegments) ;
+            Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to (iNumSegments - 1)
+        Else If (iSegment > 0 and iSegment < iNumSegments) Begin
+            For iCurSegment from iSegment to (iNumSegments - 1)
+                //*** Move index segment attributes to fill the empty space
+                Get_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex (iCurSegment + 1) to iSegmentCase
+                Get_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex (iCurSegment + 1) to iSegmentDirection
+                Get_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex (iCurSegment + 1) to iSegmentColumn
+                Set_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex iCurSegment to iSegmentCase
+                Set_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex iCurSegment to iSegmentDirection
+                Set_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex iCurSegment to iSegmentColumn
+            Loop
+            
+            Set_Attribute DF_INDEX_NUMBER_SEGMENTS of hTable iIndex to (iNumSegments - 1)
+        End
+    End_Procedure
+    
+    Procedure _addRelation Handle hFromTable Integer iFromColumn Handle hToTable Integer iToColumn
+        Open hToTable
+        Open hFromTable Mode DF_EXCLUSIVE
+        
+        // "Set_Relate Contact.Customer_Number To Customer.Customer_Number" - Only creates a temporary relation.
+        // Below code is needed to make it permanent.
+        Structure_Start hFromTable
+            Set_Attribute DF_FIELD_RELATED_FILE of hFromTable iFromColumn to hToTable
+            Set_Attribute DF_FIELD_RELATED_FIELD of hFromTable iFromColumn to iToColumn
+        Structure_End hFromTable
+        Close hToTable //(Trim(asToTableColumn[0]))
+        // Already closed at Structure_End - Close hFromTable //(Trim(asFromTableColumn[0]))
+    End_Procedure
+    
+    // Ex: Send addRelation OrderDtl.OrderId Order.Id
+    Procedure addRelation String sFromTableColumn String sToTableColumn
+        Handle hFromTable hToTable
+        Integer iFromColumn iToColumn
+        String[] asFromTableColumn asToTableColumn
+        Move (StrSplitToArray(sFromTableColumn, '.')) to asFromTableColumn
+        Move (StrSplitToArray(sToTableColumn, '.')) to asToTableColumn
+    
+        Open (Trim(asToTableColumn[0])) as hToTable
+        Open (Trim(asFromTableColumn[0])) as hFromTable Mode DF_EXCLUSIVE
+        //Move (Trim(asFromTableColumn[0])).File_Number to hFromTable
+    
+        Get FieldNameToNumber hFromTable (Trim(asFromTableColumn[1])) to iFromColumn
+        Get FieldNameToNumber hToTable (Trim(asToTableColumn[1])) to iToColumn
+    
+        Send _addRelation hFromTable iFromColumn hToTable iToColumn
+    
+    End_Procedure
+     
+    Procedure deleteRelation_TBD String sTableColumn
+        Handle hTable
+        Integer iCol
+        String[] asTableColumn
+        Move (StrSplitToArray(sTableColumn, '.')) to asTableColumn
+         
+        Open (Trim(asTableColumn[0])) hTable
+        //Move (asTableColumn[0]).Field_Number to hTable
+        Get FieldNameToNumber hTable (Trim(asTableColumn[1])) to iCol
+         
+        Structure_Start hTable "SQL_DRV"
+            Set_Attribute DF_FIELD_RELATED_FILE of hTable iCol to 0
+        Structure_End hTable DF_STRUCTEND_OPT_IN_PLACE
+    End_Procedure
+    
+    Function FieldNameToNumber Integer iTable String sName Returns Integer
+        Integer iMax iField
+        String sFieldName
+        Move (Lowercase(sName)) to sName
+        Get_Attribute DF_FILE_NUMBER_FIELDS of iTable to iMax
+        For iField from 1 to iMax
+            Get_Attribute DF_FIELD_NAME of iTable iField to sFieldName
+            If (sName=Lowercase(sFieldName)) Begin
+                Function_Return iField
+            End
+        Loop
+        If (sName="recnum") Begin
+            Function_Return 0
+        End
+        Function_Return -1 // not found
+    End_Function
+    
+    Procedure saveFdFile String sTable Handle hTableIn
+        Handle hTable hoWorkspace
+        String sPath sPathFd sPathDef
+        
+        If (num_arguments < 2) Begin
+            Move "" to hTable
+            Open (Trim(sTable)) as hTable
+        End
+        Else Begin
+            Move hTableIn to hTable
+            Open hTable
+        End
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPathFd
+        Move (sPath - sTable - ".def") to sPathDef
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPathFd
+        Output_Aux_File DF_AUX_FILE_DEF for hTable to sPathDef
+    End_Procedure
+    
+    
+//    Function keepOnlyValidChars Global String sInput String sValidChars Returns String
+//        Integer iPos iValidPos iValidLengh
+//        Boolean bValidFound
+//        String sRetStr
+//        
+//        Move 0 to iValidLengh
+//        Move 1 to iPos
+//        While (Length(sInput) >= iPos)
+//            Move False to bValidFound
+//            Move 1 to iValidPos
+//            While (Length(sValidChars) >= iValidPos)
+//                If (Mid(sInput, 1, iPos) = Mid(sValidChars, 1, iValidPos)) Begin
+//                    Move (sRetStr - Mid(sInput, 1, iPos)) to sRetStr
+//                    Move True to bValidFound
+//                    Increment iValidLengh
+//                End
+//                Increment iValidPos
+//            Loop
+//            
+////            If (not(bValidFound) and iValidLengh < 6 and iValidLengh > 0) Begin
+////                Move 0 to iValidLengh
+////                Move "" to sRetStr
+////            End
+//            Increment iPos
+//        Loop
+//        Function_Return sRetStr
+//    End_Function
+End_Class
