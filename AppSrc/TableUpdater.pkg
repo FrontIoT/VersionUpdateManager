@@ -1,5 +1,6 @@
 ﻿Use ColumnUpdater.pkg
 Use IndexUpdater.pkg
+Use FroUtils\FROUTL_String.pkg
 
 Struct tTableDefinition
     String sTableName
@@ -63,7 +64,7 @@ Class cTableUpdater is a cObject
     //
     // TODO: Check that the column name is not already added. Then ignore this...
     // TODO: WARNING! Adding iPosition might break indexes. I have not tested this yet.
-    Procedure addColumn String sTable String sColumn Handle hType Integer iLength String Integer iPrecision sDefault Integer iPosition
+    Procedure addColumn String sTable String sColumn Handle hType Integer iLength Integer iPrecision String sDefault Integer iPosition
         String sPath
         Integer iColumn
         Handle hTable hoWorkspace
@@ -147,15 +148,17 @@ Class cTableUpdater is a cObject
         String sOrigFolder
         Integer iColumn iCol iIndex
         tConnection tCV
-        //tConnection[] atCV
+        tConnection[] atCV
         
-        Get phDatabase to hDatabase
+//        Get phDatabase to hDatabase
     
         //Move 'stop_spild_lokalt' to sDatabase
-        Get psDatabase of hDatabase to sDatabase
-        //Get ConnectionIDs of (oConnection(oApplication(Self))) to atCV
-        Get ConnectionIdInfo of (oConnection(oApplication(Self))) sDatabase to tCV
+//        Get psDatabase of hDatabase to sDatabase
+//        Get ConnectionIdInfo of (oConnection(oApplication(Self))) sDatabase to tCV
 
+        Get ConnectionIDs of (oConnection(oApplication(Self))) to atCV
+        Move atCV[0] to tCV
+        
         //*** Make sure int file  comes in first folder of datapath by
         //*** making that folder current
         Get phoWorkspace of ghoApplication to hoWorkspace
@@ -405,7 +408,7 @@ Class cTableUpdater is a cObject
             
             Get_Attribute DF_FIELD_TYPE              of hTable sSegment.iColumn to iType
             Set_Attribute DF_INDEX_SEGMENT_FIELD     of hTable iIndex iCurSegment to sSegment.iColumn
-            If (iType = DF_ASCII or iType = DF_TEXT) Begin
+            If (iType = DF_ASCII) Begin // Was not possible on DF_TEXT... or iType = DF_TEXT) Begin
                 Set_Attribute DF_INDEX_SEGMENT_CASE      of hTable iIndex iCurSegment to sSegment.iCase
             End
             Set_Attribute DF_INDEX_SEGMENT_DIRECTION of hTable iIndex iCurSegment to sSegment.iDirection
@@ -527,31 +530,31 @@ Class cTableUpdater is a cObject
     End_Procedure
     
     
-    Function keepOnlyValidChars Global String sInput String sValidChars Returns String
-        Integer iPos iValidPos iValidLengh
-        Boolean bValidFound
-        String sRetStr
-        
-        Move 0 to iValidLengh
-        Move 1 to iPos
-        While (Length(sInput) >= iPos)
-            Move False to bValidFound
-            Move 1 to iValidPos
-            While (Length(sValidChars) >= iValidPos)
-                If (Mid(sInput, 1, iPos) = Mid(sValidChars, 1, iValidPos)) Begin
-                    Move (sRetStr - Mid(sInput, 1, iPos)) to sRetStr
-                    Move True to bValidFound
-                    Increment iValidLengh
-                End
-                Increment iValidPos
-            Loop
-            
-//            If (not(bValidFound) and iValidLengh < 6 and iValidLengh > 0) Begin
-//                Move 0 to iValidLengh
-//                Move "" to sRetStr
-//            End
-            Increment iPos
-        Loop
-        Function_Return sRetStr
-    End_Function
+//    Function keepOnlyValidChars Global String sInput String sValidChars Returns String
+//        Integer iPos iValidPos iValidLengh
+//        Boolean bValidFound
+//        String sRetStr
+//        
+//        Move 0 to iValidLengh
+//        Move 1 to iPos
+//        While (Length(sInput) >= iPos)
+//            Move False to bValidFound
+//            Move 1 to iValidPos
+//            While (Length(sValidChars) >= iValidPos)
+//                If (Mid(sInput, 1, iPos) = Mid(sValidChars, 1, iValidPos)) Begin
+//                    Move (sRetStr - Mid(sInput, 1, iPos)) to sRetStr
+//                    Move True to bValidFound
+//                    Increment iValidLengh
+//                End
+//                Increment iValidPos
+//            Loop
+//            
+////            If (not(bValidFound) and iValidLengh < 6 and iValidLengh > 0) Begin
+////                Move 0 to iValidLengh
+////                Move "" to sRetStr
+////            End
+//            Increment iPos
+//        Loop
+//        Function_Return sRetStr
+//    End_Function
 End_Class
