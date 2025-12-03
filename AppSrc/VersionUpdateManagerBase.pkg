@@ -1,4 +1,4 @@
-// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
+﻿// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
 
 { ClassType=Abstract }
 Class cVersionUpdateManagerBase is a cObject
@@ -71,5 +71,11 @@ Class cVersionUpdateManagerBase is a cObject
         
         Function_Return bOk
     End_Function
+    
+    // Just to allow older versions to still work
+    { Obsolete }
+    Procedure run Integer iVersion
+        Send versionUpdateManagerProcess iVersion
+    End_Procedure
     
 End_Class
