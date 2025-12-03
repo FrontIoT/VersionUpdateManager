@@ -1,0 +1,16 @@
+Struct IndexSegment
+    Handle hTable
+    String sName
+    Integer iIndex
+    Integer iSegment // The number of columns used in the segment
+    Integer iColumn
+    Integer iCase
+    Integer iDirection
+    Boolean bPrimary
+    Integer iNumSegments
+End_Struct // IndexSegment
+
+Class DbVersionIndexUpdater is a cObject
+
+
+End_Class

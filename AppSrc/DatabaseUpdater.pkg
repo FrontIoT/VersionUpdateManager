@@ -1,0 +1,62 @@
+// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
+
+{ ClassType=Abstract }
+Class cDatabaseUpdater is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+        Property String psDatabaseDriver "MSSQLDRV" // Structure_Start hSystemTable "DATAFLEX"
+        Property String psDatabase ""
+        Property Boolean pbVerbose True // Verbose output
+        
+        Property String psSystemTable ""
+        Property Handle phSystemTable
+
+        Property Handle[] phaTables
+        Property Handle[] phaRelations
+        Property String[] psQueries
+
+    End_Procedure
+
+    Procedure addTable Handle hTable
+        Handle[] haTables
+        Get phaTables to haTables
+        Move hTable to haTables[SizeOfArray(haTables)]
+        Set phaTables to haTables
+    End_Procedure
+
+    Procedure addRelation String sRelation
+        Handle[] haRelations
+        Get phaRelations to haRelations
+        Move sRelation to haRelations[SizeOfArray(haRelations)]
+        Set phaRelations to haRelations
+    End_Procedure
+
+    Procedure process
+        Integer iTable iRelation iQuery
+        Handle[] haTables
+        Handle[] haRelations
+        String[] sQueries
+        Get phaTables to haTables
+        Get phaRelations to haRelations
+        Get psQueries to sQueries
+
+        For iTable from 0 to (SizeOfArray(haTables)-1)
+            Send process of haTables[iTable]
+        Loop
+
+        For iRelation from 0 to (SizeOfArray(haRelations)-1)
+            Send process of haRelations[iRelation]
+        Loop
+
+        For iQuery from 0 to (SizeOfArray(sQueries)-1)
+            Send ExecQuery of sQueries[iQuery]
+        Loop
+        
+    End_Procedure
+
+    Procedure ExecQuery String sQuery
+        Error 300 "ExecQuery not implemented."
+    End_Procedure
+
+End_Class

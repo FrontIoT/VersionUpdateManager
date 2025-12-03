@@ -1,0 +1,34 @@
+{ ClassType=Abstract }
+Class cVersionUpdateConfigurationBase is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+
+    End_Procedure
+
+    Function getVersion Returns Integer
+        Boolean bOk
+        Integer iVersion
+        Get ValidateSetup to bOk
+        If (not(bOk)) Begin
+            Error 300 ("Function getVersion not implemented!")
+            Function_Return -1
+        End
+
+        Function_Return iVersion
+    End_Function
+
+    Function setVersion Integer iVersion Returns Boolean
+        Boolean bOk
+        Get ValidateSetup to bOk
+        If (not(bOk)) Begin
+            Error 300 ("Function setVersion not implemented!")
+            Function_Return -1
+        End
+    End_Function
+
+    Function ValidateSetup Returns Boolean
+        Error 300 ("Function ValidateSetup not implemented!")
+        Function_Return False // Make sure this returns true when the configuration is implemented and valid
+    End_Function
+
+End_Class

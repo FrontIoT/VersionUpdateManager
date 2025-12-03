@@ -1,4 +1,4 @@
-﻿{ ClassType=Abstract }
+{ ClassType=Abstract }
 Class cUpdateVersionBase is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
