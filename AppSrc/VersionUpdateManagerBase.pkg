@@ -73,9 +73,10 @@ Class cVersionUpdateManagerBase is a cObject
     End_Function
     
     // Just to allow older versions to still work
-    { Obsolete }
-    Procedure run Integer iVersion
-        Send versionUpdateManagerProcess iVersion
+    // Use versionUpdateManagerProcess directly instead
+    { Obsolete = True }
+    Procedure run Integer iVersion Integer iFromVersion
+        Send versionUpdateManagerProcess iVersion iFromVersion
     End_Procedure
     
 End_Class
