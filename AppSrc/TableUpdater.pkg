@@ -278,6 +278,7 @@ Class cTableUpdater is a cObject
         Structure_End hTable DF_STRUCTEND_OPT_NONE
     End_Procedure
 
+    Procedure addColumnToIndex Handle hTable String sTable Integer iIndex Integer iSegment Integer iColumn String sDbDriverParam
     // TODO: Move this to DbVersionIndexUpdater?
     Procedure _addIndex Handle hTable String sTable Integer[] iColumns String sDbDriverParam
         String sPath sDbDriver sName
