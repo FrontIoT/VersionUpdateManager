@@ -279,6 +279,47 @@ Class cTableUpdater is a cObject
     End_Procedure
 
     Procedure addColumnToIndex Handle hTable String sTable Integer iIndex Integer iSegment Integer iColumn String sDbDriverParam
+        String sDbDriver sPath
+        Integer iSeg
+        IndexSegment[] stIndexSegment
+        Handle hoWorkspace
+        
+        Move iSegment to iSeg
+        
+        Move "MSSQLDRV" to sDbDriver
+        If (num_arguments > 5) Move sDbDriverParam to sDbDriver
+        
+        Structure_Start hTable sDbDriver
+
+        
+        Move hTable to stIndexSegment[iSeg].hTable
+        Move DF_CASE_IGNORED to stIndexSegment[iSeg].iCase // DF_CASE_USED, DF_CASE_IGNORED
+        Move iColumn to stIndexSegment[iSeg].iColumn
+        Move DF_ASCENDING to stIndexSegment[iSeg].iDirection // DF_ASCENDING, DF_DESCENDING
+        Move iIndex to stIndexSegment[iSeg].iIndex
+        Move iSegment to stIndexSegment[iSeg].iSegment // -1 Will add it last
+        Move iSeg to stIndexSegment[iSeg].iNumSegments
+        
+        Send InsertSegment stIndexSegment[iSeg]
+        
+        Structure_End hTable
+    
+        Move "" to hTable
+        Open (Trim(sTable)) as hTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+        
+    End_Procedure
+
     // TODO: Move this to DbVersionIndexUpdater?
     Procedure _addIndex Handle hTable String sTable Integer[] iColumns String sDbDriverParam
         String sPath sDbDriver sName
