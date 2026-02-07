@@ -76,7 +76,7 @@ Class cTableUpdater is a cObject
         Structure_Start hTable "MSSQLDRV"
         
         Move 0 to iColumn // Zero adds the column at the end of columns
-        If (num_arguments = 6) Move iPosition to iPosition
+        If (num_arguments = 7) Move iPosition to iColumn
         Create_Field hTable at iColumn
         Set_Attribute DF_FIELD_NAME          of hTable iColumn to sColumn
         Set_Attribute DF_FIELD_TYPE          of hTable iColumn to hType // (DF_BCD: Numeric, DF_ASCII: ascii, DF_DATE: date...)
