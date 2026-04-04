@@ -58,9 +58,9 @@ Class cTableUpdater is a cObject
 
 
     // Usage samples: 
-    // Send "table" "numeric_column" DF_BCD 2 0
-    // Send "table" "ascii_column" DF_ASCII 100 ""
-    // Send "table" "date_column" DF_DATE 10 "0000-00-00"
+    // Send "table" "numeric_column" DF_BCD 2 0 0
+    // Send "table" "ascii_column" DF_ASCII 100 0 ""
+    // Send "table" "date_column" DF_DATE 10 0 "0001-01-01"
     //
     // TODO: Check that the column name is not already added. Then ignore this...
     // TODO: WARNING! Adding iPosition might break indexes. I have not tested this yet.
