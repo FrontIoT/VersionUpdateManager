@@ -1,0 +1,20 @@
+{
+    "dependencies": [
+    ],
+    "description": "Light weight tool for managing setting and database related changes during deployment",
+    "df": 26.0,
+    "package": {
+        "df-max": 26.0,
+        "df-min": 19.0,
+        "icon": "",
+        "includeFiles": [
+            "CHANGELOG.md"
+        ],
+        "license": "GPL",
+        "licenseFile": "LICENSE",
+        "version": "0.0.3"
+    },
+    "paths": {
+    },
+    "workspaceName": "Version Update Manager"
+}
