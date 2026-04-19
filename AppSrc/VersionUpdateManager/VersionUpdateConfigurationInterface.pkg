@@ -1,0 +1,13 @@
+﻿Class cVersionUpdateConfigurationInterface is a Mixin
+    Function getVersion Returns Integer
+        Error DFERR_PROGRAM ("Function getVersion not implemented!")
+    End_Function
+
+    Function setVersion Integer iVersion Returns Boolean
+        Error DFERR_PROGRAM ("Function setVersion not implemented!")
+    End_Function
+
+    Procedure validateSetup Returns Boolean
+        Error DFERR_PROGRAM ("Function validateSetup not implemented!")
+    End_Procedure
+End_Class

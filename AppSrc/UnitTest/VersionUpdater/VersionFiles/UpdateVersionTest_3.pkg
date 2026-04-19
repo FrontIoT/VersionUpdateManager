@@ -1,0 +1,8 @@
+﻿Use VersionUpdateManager\UpdateVersionBase.pkg
+
+Class cUpdateVersionTest_3 is a cUpdateVersionBase
+    
+    Procedure update
+        Set pbTestVersionExecutedState3 of oTestVersionUpdateManager to True
+    End_Procedure
+End_Class

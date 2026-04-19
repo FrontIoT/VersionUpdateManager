@@ -1,0 +1,21 @@
+{
+    "dependencies": [
+        "DataFlex-dev/DFUnit#1.0.1"
+    ],
+    "description": "Light weight tool for managing setting and database related changes during deployment",
+    "df": 26.0,
+    "package": {
+        "df-max": 26.0,
+        "df-min": 19.0,
+        "includeFiles": [
+            "CHANGELOG.md"
+        ],
+        "license": "MIT",
+        "licenseFile": "LICENSE",
+        "version": "0.0.3"
+    },
+    "projects": [
+        "UnitTest.src"
+    ],
+    "workspaceName": "Version Update Manager"
+}

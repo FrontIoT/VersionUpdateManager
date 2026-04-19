@@ -1,5 +1,4 @@
 ﻿{ ClassType=Abstract }
-{ Obsolete }
 Class cUpdateVersionBase is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
@@ -27,7 +26,7 @@ Class cUpdateVersionBase is a cObject
 //        Get Name of hSuperClass to sClassName
    
         //Get Object_Label of Self to sClassName
-//        Error 300 ("Procedure update not implemented in class " + sClassName)
-        Error 300 ("Procedure update not implemented in child class!")
+//        Error DFERR_PROGRAM ("Procedure update not implemented in class " + sClassName)
+        Error DFERR_PROGRAM ("Procedure update not implemented in child class!")
     End_Procedure
 End_Class

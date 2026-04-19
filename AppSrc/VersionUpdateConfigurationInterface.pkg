@@ -1,4 +1,5 @@
-﻿Class cVersionUpdateConfigurationInterface is a Mixin
+﻿{ Obsolete }
+Class cVersionUpdateConfigurationInterface is a Mixin
     Function getVersion Returns Integer
         Error 300 ("Function getVersion not implemented!")
     End_Function

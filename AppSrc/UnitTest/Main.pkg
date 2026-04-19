@@ -1,0 +1,99 @@
+﻿Object oMainFixtures is a cTestFixture
+    Procedure Setup
+        Boolean bOk
+        Handle[] haEmpty
+        // Reset the initial version to version 0
+        Get setVersion of oTestConfiguration 0 to bOk
+        
+        // Empty the array of installed versions
+        Set phaVersionObjectArray of oTestVersionUpdateManager to haEmpty
+        
+        // Reset the test installed state of each version
+        Set pbTestVersionExecutedState1 of oTestVersionUpdateManager to False
+        Set pbTestVersionExecutedState2 of oTestVersionUpdateManager to False
+        Set pbTestVersionExecutedState3 of oTestVersionUpdateManager to False
+    End_Procedure
+    
+    Procedure TearDown
+    End_Procedure
+    
+    Object oMainTests is a cTestFixture
+        
+        { Published = True }
+        Procedure ProcessTests
+            Boolean bOk bVersionExecState1 bVersionExecState2 bVersionExecState3
+            Integer iVersion
+            Handle[] haVersionObjects 
+            
+            Send AssertFalse False 'UnitTest is working'
+
+            // Check that we are starting at version 0    
+            Get getVersion of oTestConfiguration to iVersion
+            Send AssertIAreEqual 0 iVersion 'Initial version should be 0'
+            
+            // Check that no UpdateVersion classes are in our array of versions
+            Get phaVersionObjects of oTestVersionUpdateManager to haVersionObjects
+            Send AssertIAreEqual 0 (SizeOfArray(haVersionObjects)) 'We expect no versions in the array here'
+            
+            // Append the first version to our array
+            Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_1))
+
+            // Check that version one has not been implemented yet
+            Get pbTestVersionExecutedState1 of oTestVersionUpdateManager to bVersionExecState1
+            Send AssertFalse bVersionExecState1 'Version 1 has not been implemented'
+            
+            // Check that there are now an UpdateVersion class in our array of versions
+            Get phaVersionObjectArray of oTestVersionUpdateManager to haVersionObjects
+            Send AssertIAreEqual 1 (SizeOfArray(haVersionObjects)) 'We expect 1 version in the array here'
+
+            // Run the version update script
+            Send versionUpdateManagerProcess of oTestVersionUpdateManager
+
+            // Validate that version 1 has been executed and is now installed
+            Get pbTestVersionExecutedState1 of oTestVersionUpdateManager to bVersionExecState1
+            Send AssertFalse (not(bVersionExecState1)) 'Version 1 has been implemented'
+
+            // Check that we are now at version 1
+            Get getVersion of oTestConfiguration to iVersion
+            Send AssertIAreEqual 1 iVersion 'Initial version should be 1'
+
+
+            
+            // Add version 2 and 3 to the array
+            Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_2))
+            Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_3))
+
+
+            // Validate that version 2 has not been executed and is now installed
+            Get pbTestVersionExecutedState2 of oTestVersionUpdateManager to bVersionExecState2
+            Send AssertFalse ((bVersionExecState2)) 'Version 2 has not been implemented'
+
+            // Validate that version 3 has not been executed and is now installed
+            Get pbTestVersionExecutedState3 of oTestVersionUpdateManager to bVersionExecState3
+            Send AssertFalse ((bVersionExecState3)) 'Version 3 has not been implemented'
+
+            // Check that there are now three UpdateVersion class in our array of versions
+            Get phaVersionObjectArray of oTestVersionUpdateManager to haVersionObjects
+            Send AssertIAreEqual 3 (SizeOfArray(haVersionObjects)) 'We expect 3 versions in the array here'
+
+            // Run the version update script
+            Send versionUpdateManagerProcess of oTestVersionUpdateManager
+
+            // Validate that version 2 has been executed and is now installed
+            Get pbTestVersionExecutedState2 of oTestVersionUpdateManager to bVersionExecState2
+            Send AssertFalse (not(bVersionExecState2)) 'Version 2 has been implemented'
+
+            // Validate that version 3 has been executed and is now installed
+            Get pbTestVersionExecutedState3 of oTestVersionUpdateManager to bVersionExecState3
+            Send AssertFalse (not(bVersionExecState3)) 'Version 3 has been implemented'
+
+            // Check that we are now at version 3
+            Get getVersion of oTestConfiguration to iVersion
+            Send AssertIAreEqual 3 iVersion 'Initial version should be 3'
+            
+            
+        End_Procedure
+        
+    End_Object
+    
+End_Object

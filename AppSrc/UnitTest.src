@@ -1,0 +1,37 @@
+﻿Use DFUnit.pkg
+Use DFAllEnt.pkg
+Use cCJStandardCommandBarSystem.pkg
+
+Object oHtmlHelp is a cHtmlHelp
+End_Object
+
+Object oApplication is a cApplication
+    Set peHelpType to htHtmlHelp
+
+    Object oConnection is a cConnection
+        Use LoginEncryption.pkg
+        Use DatabaseLoginDialog.dg
+    End_Object
+
+End_Object
+
+Use UnitTest\VersionUpdater\VersionUpdateConfigurationTest.pkg
+Object oTestConfiguration is a cVersionUpdateConfigurationTest
+End_Object
+
+Use UnitTest\VersionUpdater\VersionUpdateManagerTest.pkg
+Object oTestVersionUpdateManager is a cVersionUpdateManagerTest
+    Set phVersionUpdateConfiguration to oTestConfiguration
+End_Object
+
+Use UnitTest\VersionUpdater\IncludeVersionFiles.pkg
+
+
+
+Object oTestApplication is a cDFUnitTestApplication
+    Set pbUseUI to False
+    
+    Use UnitTest\Main.pkg
+    
+End_Object
+

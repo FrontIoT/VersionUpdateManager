@@ -1,0 +1,9 @@
+﻿Use AppSrc\UnitTest\VersionUpdater\VersionFiles\UpdateVersionTest_1.pkg
+// Comented out as it is being inluded by the test scripts instead
+//Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_1))
+
+Use AppSrc\UnitTest\VersionUpdater\VersionFiles\UpdateVersionTest_2.pkg
+//Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_2))
+Use AppSrc\UnitTest\VersionUpdater\VersionFiles\UpdateVersionTest_3.pkg
+//Send AppendVersion of oTestVersionUpdateManager (RefClass(cUpdateVersionTest_3))
+

@@ -1,0 +1,11 @@
+﻿Use VersionUpdateManager\VersionUpdateManagerBase.pkg
+
+Class cVersionUpdateManagerTest is a cVersionUpdateManagerBase
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Integer pbTestVersionExecutedState1 False
+        Property Integer pbTestVersionExecutedState2 False
+        Property Integer pbTestVersionExecutedState3 False
+
+    End_Procedure
+End_Class

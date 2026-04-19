@@ -1,0 +1,114 @@
+﻿// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
+
+{ ClassType=Abstract }
+Class cVersionUpdateManagerBase is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Boolean pbVerbose False // Verbose output
+        Property Handle phVersionUpdateConfiguration
+        Property Handle[] phaVersionObjectArray
+        Property Handle[] phaVersionObjects
+    End_Procedure
+    
+    Procedure End_Construct_Object
+        Handle  hVersionUpdaterConfiguration
+        Get phVersionUpdateConfiguration to hVersionUpdaterConfiguration
+        if (not(hVersionUpdaterConfiguration)) Begin
+            Error DFERR_PROGRAM "Version updater configuration handle is not defined. (Set phVersionUpdateConfiguration of hDbVersionUpdater to hVersionUpdaterConfiguration)"
+            Abort
+        End
+        Forward Send End_Construct_Object
+    End_Procedure
+
+    { Visibility=Private }
+    Function UpdateVersion Integer iVersion Returns Boolean
+        Boolean bOk
+        Handle hoUpdateObj
+        Integer iNewVersion iCnt
+        Handle[] haVersionObjectArray
+        Handle[] haVersionObjects
+        Get phaVersionObjectArray to haVersionObjectArray
+        Get phaVersionObjects to haVersionObjects
+        Move True to bOk
+        
+        If (SizeOfArray(haVersionObjectArray) >= (iVersion+1)) Begin
+            Get Create (haVersionObjectArray[iVersion]) to hoUpdateObj
+            Send update of hoUpdateObj
+        End
+
+//        If (SizeOfArray(haVersionObjectArray) <= (iVersion+1) and SizeOfArray(haVersionObjectArray) > (iVersion+1-SizeOfArray(haVersionObjectArray)) ;
+//            and (SizeOfArray(haVersionObjects) + SizeOfArray(haVersionObjectArray)) <= (iVersion+1)) Begin
+//            Get haVersionObjects[iVersion] to hoUpdateObj
+//            Send update of hoUpdateObj
+//        End
+        
+        Function_Return bOk
+    End_Function
+
+    Procedure AppendVersion Handle hcUpdateVersion
+        Handle[] haVersionObjects
+        Get phaVersionObjectArray to haVersionObjects
+        Move hcUpdateVersion to haVersionObjects[-1]
+        Set phaVersionObjectArray to haVersionObjects
+    End_Procedure
+
+    Procedure versionUpdateManagerProcess Integer iRerunFromVersionParam  Integer iEndAtVersionParam
+        Integer iRerunFromVersion iLatestVersion
+        Move -1 to iRerunFromVersion
+        If (num_arguments > 0) Move iRerunFromVersionParam to iRerunFromVersion
+        Move -1 to iLatestVersion
+        If (num_arguments > 1) Move iEndAtVersionParam to iLatestVersion
+        
+        If (iLatestVersion = -1) Begin
+            Handle[] haVersionObjectsInternal
+            Handle[] haVersionObjectsNew
+            Get phaVersionObjectArray to haVersionObjectsInternal
+            Move (SizeOfArray(haVersionObjectsInternal)) to iLatestVersion
+            Get phaVersionObjects to haVersionObjectsNew
+            Move (SizeOfArray(haVersionObjectsNew) + iLatestVersion) to iLatestVersion
+        End
+
+        String sDatabaseDriver sSystemTable sConfigFilePath
+        Integer iColumn iCurrentVersion iUpdatingVersion
+        Boolean bDeveloperMode bOk bVerbose bUseSystemTableConfig
+        Handle  hVersionUpdaterConfiguration
+        Get pbVerbose to bVerbose
+        Get phVersionUpdateConfiguration to hVersionUpdaterConfiguration
+
+        if (iLatestVersion < 0) Begin
+            Error DFERR_PROGRAM "Latest version parameter is not set. (Send run of object to piLatestVersion)"
+            Procedure_Return
+        End
+        
+        Get getVersion of hVersionUpdaterConfiguration to iCurrentVersion
+
+        If (bVerbose) Showln ("DB at currently version " + String(iCurrentVersion) + ". Latest version " + String(iLatestVersion))
+        Move (iCurrentVersion) to iUpdatingVersion
+        
+        If (iRerunFromVersion > -1) Move (iRerunFromVersion-1) to iUpdatingVersion
+        
+        While (iUpdatingVersion < iLatestVersion)
+            Increment iUpdatingVersion
+            If (bVerbose) Showln ("Updating " + String(iUpdatingVersion))
+            
+            Get UpdateVersion (iUpdatingVersion-1) to bOk
+            
+            If (not(bOk)) Begin
+                Move iLatestVersion to iUpdatingVersion
+                If (bVerbose) Showln ("Updating " + String(iUpdatingVersion) + " failed. Process cancelled...")
+            End
+            Else Begin
+                Get setVersion of hVersionUpdaterConfiguration iUpdatingVersion to bOk
+            End
+            
+        Loop
+    End_Procedure
+    
+    // Just to allow older versions to still work
+    // Use versionUpdateManagerProcess directly instead
+    { Obsolete = True }
+    Procedure run Integer iVersion Integer iFromVersion
+        Send versionUpdateManagerProcess iVersion iFromVersion
+    End_Procedure
+    
+End_Class

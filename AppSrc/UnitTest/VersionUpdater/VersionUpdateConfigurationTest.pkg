@@ -1,0 +1,39 @@
+﻿Use VersionUpdateManager\VersionUpdateConfigurationInterface.pkg
+//Use VersionUpdateManager\VersionUpdateConfigurationBase.pkg
+
+Class cVersionUpdateConfigurationTest is a cObject
+    Procedure Construct_Object
+        Forward Send Construct_Object
+        Property Integer piVersionNumber -1
+        
+    End_Procedure
+    
+    Import_Class_Protocol cVersionUpdateConfigurationInterface
+    
+    Function setVersion Integer iVersion Returns Boolean
+        Integer iVersionNumber
+        
+        Set piVersionNumber to iVersion
+        
+        Get getVersion to iVersionNumber
+        If (iVersion = iVersionNumber) Function_Return True 
+        Function_Return False
+    End_Function
+    
+    Function getVersion Returns Integer
+        Integer iVersionNumber
+        
+        Get piVersionNumber to iVersionNumber
+        
+        Function_Return iVersionNumber
+    End_Function
+    
+    Function ValidateSetup Returns Boolean
+        Integer iVersionNumber1 iVersionNumber2
+        Get getVersion to iVersionNumber1
+        Get setVersion to iVersionNumber1
+        Get getVersion to iVersionNumber2
+        If (iVersionNumber1 = iVersionNumber2) Function_Return True
+        Function_Return False
+    End_Function
+End_Class

@@ -1,0 +1,15 @@
+﻿DfPkg
+*.lock
+*.exe
+*.dbg
+*.ws
+*.cfg
+IdeSrc
+*.dep
+*.fld
+*.pbg
+*.pdp
+*.pkd
+*.prn
+*.prp
+*.manifest

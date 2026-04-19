@@ -1,6 +1,7 @@
 ﻿// Reference https://docs.dataaccess.com/dataflexhelp/mergedProjects/Tools/Defining_Columns.htm
 
 { ClassType=Abstract }
+{ Obsolete }
 Class cVersionUpdateManagerBase is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object

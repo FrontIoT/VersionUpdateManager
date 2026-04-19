@@ -1,5 +1,5 @@
-﻿Use VersionUpdateConfigurationInterface.pkg
-{ Obsolete }
+﻿Use VersionUpdateManager\VersionUpdateConfigurationInterface.pkg
+
 Class cVersionUpdateConfigurationFileSample is a cObject
     Procedure Construct_Object
         Forward Send Construct_Object
