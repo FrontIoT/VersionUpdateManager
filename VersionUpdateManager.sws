@@ -10,7 +10,7 @@
         "includeFiles": [
             "CHANGELOG.md"
         ],
-        "license": "GPL",
+        "license": "MIT",
         "licenseFile": "LICENSE",
         "version": "0.0.3"
     },
