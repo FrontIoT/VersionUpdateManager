@@ -81,7 +81,15 @@ Class cTableUpdater is a cObject
         Set_Attribute DF_FIELD_NAME          of hTable iColumn to sColumn
         Set_Attribute DF_FIELD_TYPE          of hTable iColumn to hType // (DF_BCD: Numeric, DF_ASCII: ascii, DF_DATE: date...)
         Set_Attribute DF_FIELD_LENGTH        of hTable iColumn to iLength
-        If (hType <> DF_BCD) Begin
+        Set_Attribute DF_FIELD_PRECISION     of hTable iColumn to iPrecision
+        
+        // TODO: Set_Attribute DF_FIELD_NATIVE_TYPE ... Look at these 
+        // DF_FILE_LOGICAL_NAME
+//        Set_Attribute DF_FIELD_SQL_COLUMN_NAME
+//        Set_Attribute DF_SQ
+        
+        If (hType <> DF_BCD) Begin // TODO: This should work on none number tables as well?!? Perhaps just set different default defaults depending on type?
+            If (num_arguments < 6) Move '0' to sDefault
             Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to sDefault
         End
         
