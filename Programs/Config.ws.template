@@ -1,0 +1,12 @@
+[Workspace]
+Home=..\
+AppSrcPath=AppSrc
+AppHTMLPath=.
+BitmapPath=.
+IdeSrcPath=IdeSrc
+DataPath=Data
+DDSrcPath=.
+HelpPath=Help
+ProgramPath=Programs
+FileList=Data\Filelist.cfg
+Description=Light weight tool for managing setting and database related changes during deployment
