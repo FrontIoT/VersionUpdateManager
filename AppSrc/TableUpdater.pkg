@@ -54,6 +54,23 @@ Class cTableUpdater is a cObject
 
 
 
+    Procedure startTableUpdate Handle ByRef hTable
+        Handle hDatabase
+        Handle hoWorkspace
+        String sPath sDatabase
+        String sOrigFolder
+        Integer iColumn iCol iIndex
+        tConnection tCV
+        tConnection[] atCV
+        
+        Get ConnectionIDs of (oConnection(oApplication(Self))) to atCV
+        Move atCV[0] to tCV
+        Structure_Start hTable "MSSQLDRV" //"MSSQLDRV" We use DATAFLEX when adding columns so why not here as well...
+    End_Procedure
+    
+    Procedure endTableUpdate Handle hTable
+        Structure_End hTable
+    End_Procedure
 
 
 
@@ -148,6 +165,13 @@ Class cTableUpdater is a cObject
         Set_Attribute DF_FILE_PHYSICAL_NAME of hTable to (sNewTableName + ".int")
     End_Procedure
 
+    Procedure MakePrimaryKey Handle hTable Integer iColumn
+        Send startTableUpdate (&hTable)
+        Set_Attribute DF_INDEX_SQL_PRIMARY_KEY of hTable iColumn to True
+        Send endTableUpdate hTable
+    End_Procedure
+
+
 
     Procedure createTable String sTableName String sDescription ColumnDefinition[] cdColumns Integer[] iIdxColumns
         Handle hTable hDatabase
@@ -198,7 +222,10 @@ Class cTableUpdater is a cObject
                 Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to cdColumns[iCol].sDefault
                 
                 // Set auto_increment column
-                If (cdColumns[iCol].bIdentity) Set_Attribute DF_FIELD_IS_IDENTITY of hTable iColumn to True
+                If (cdColumns[iCol].bIdentity) Begin
+                    Set_Attribute DF_FIELD_IS_IDENTITY of hTable iColumn to True
+                    Set_Attribute DF_INDEX_SQL_PRIMARY_KEY of hTable iColumn to True
+                End 
                 
                 Increment iCol
             Loop
