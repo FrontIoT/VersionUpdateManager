@@ -72,6 +72,70 @@ Class cTableUpdater is a cObject
         Structure_End hTable
     End_Procedure
 
+// Native types from cli.pkg
+//Define SQL_UNKNOWN_TYPE   for    0
+//Define SQL_CHAR           for    1
+//Define SQL_NUMERIC        for    2
+//Define SQL_DECIMAL        for    3
+//Define SQL_INTEGER        for    4
+//Define SQL_SMALLINT       for    5
+//Define SQL_FLOAT          for    6
+//Define SQL_REAL           for    7
+//Define SQL_DOUBLE         for    8
+//Define SQL_DATETIME       for    9
+//Define SQL_VARCHAR        for   12
+//Define SQL_TYPE_DATE      for   91
+//Define SQL_TYPE_TIME      for   92
+//Define SQL_TYPE_TIMESTAMP for   93
+
+    Procedure updateColumn String sTable Integer iColumn String sColumn Boolean bUseSQLNativeType Handle hType Integer iLength Integer iPrecision String sDefault
+        String sPath
+        Handle hTable hoWorkspace
+        Integer iNativeType
+     
+        Open (Trim(sTable)) as hTable
+     
+        Structure_Start hTable "MSSQLDRV"
+        
+            Get_Attribute DF_FIELD_NATIVE_TYPE of hTable iColumn to iNativeType
+            
+            // Update the existing column instead of creating a new one
+            Set_Attribute DF_FIELD_NAME          of hTable iColumn to sColumn
+            
+            If (bUseSQLNativeType) Begin
+                // Native SQL type update for existing SQL columns
+                Set_Attribute DF_FIELD_NATIVE_TYPE of hTable iColumn to hType
+            End
+            Else Begin
+                // DataFlex type update
+                Set_Attribute DF_FIELD_TYPE of hTable iColumn to hType
+            End
+            
+            Set_Attribute DF_FIELD_LENGTH        of hTable iColumn to iLength
+            // TODO: Only valid if the type is DF_BCD, mind MSSQL native types
+            // Set_Attribute DF_FIELD_PRECISION     of hTable iColumn to iPrecision
+     
+            // TODO: Make sure this handles the situation with SQL nativ types as well
+//            If (hType <> DF_BCD) Begin
+//                If (num_arguments < 8) Move "0" to sDefault
+//                Set_Attribute DF_FIELD_DEFAULT_VALUE of hTable iColumn to sDefault
+//            End
+        Structure_End hTable
+        
+        Move "" to hTable
+        Open (Trim(sTable)) as hTable
+        Move '' to sPath
+        
+        Get phoWorkspace of ghoApplication to hoWorkspace
+        Get psDDSRCPath of hoWorkspace to sPath
+        Get PathAtIndex of hoWorkspace sPath 1 to sPath
+        Set_Directory sPath
+        If (Right(sPath, 1) <> Sysconf(Sysconf_Dir_Separator)) ;
+            Move (sPath - Sysconf(Sysconf_Dir_Separator)) to sPath
+        Move (sPath - sTable - ".fd") to sPath
+        
+        Output_Aux_File DF_AUX_FILE_FD for hTable to sPath
+    End_Procedure
 
 
     // Usage samples: 
