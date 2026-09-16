@@ -1,6 +1,5 @@
 ﻿Use ColumnUpdater.pkg
 Use IndexUpdater.pkg
-Use FroUtils\FROUTL_String.pkg
 
 Struct tTableDefinition
     String sTableName
@@ -578,33 +577,4 @@ Class cTableUpdater is a cObject
         Output_Aux_File DF_AUX_FILE_FD for hTable to sPathFd
         Output_Aux_File DF_AUX_FILE_DEF for hTable to sPathDef
     End_Procedure
-    
-    
-//    Function keepOnlyValidChars Global String sInput String sValidChars Returns String
-//        Integer iPos iValidPos iValidLengh
-//        Boolean bValidFound
-//        String sRetStr
-//        
-//        Move 0 to iValidLengh
-//        Move 1 to iPos
-//        While (Length(sInput) >= iPos)
-//            Move False to bValidFound
-//            Move 1 to iValidPos
-//            While (Length(sValidChars) >= iValidPos)
-//                If (Mid(sInput, 1, iPos) = Mid(sValidChars, 1, iValidPos)) Begin
-//                    Move (sRetStr - Mid(sInput, 1, iPos)) to sRetStr
-//                    Move True to bValidFound
-//                    Increment iValidLengh
-//                End
-//                Increment iValidPos
-//            Loop
-//            
-////            If (not(bValidFound) and iValidLengh < 6 and iValidLengh > 0) Begin
-////                Move 0 to iValidLengh
-////                Move "" to sRetStr
-////            End
-//            Increment iPos
-//        Loop
-//        Function_Return sRetStr
-//    End_Function
 End_Class
