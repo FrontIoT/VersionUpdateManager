@@ -13,3 +13,4 @@ IdeSrc
 *.prn
 *.prp
 *.manifest
+AppSrc/LoginEncryptionKey.inc
